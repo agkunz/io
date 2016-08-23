@@ -2,6 +2,8 @@
 var WebSocketServer = require('websocket').server;
 var http = require('http');
 
+var env = require(__dirname + '/env.js');
+
 /////////////////////////////////////////////////
 
 var server = http.createServer(begin);
@@ -18,7 +20,7 @@ wsServer.on('request', request);
 /////////////////////////////////////////////////
 
 var connections = [];
-var script_root = '.';
+var script_root = './';
 
 function request (request)
 {
@@ -49,7 +51,7 @@ function request (request)
         try {
             console.log (script_root+message.route+'.js');
             
-            var response = require (script_root+message.route+'.js')(message);
+            var response = require (env.SCRIPT_ROOT+message.route+'.js')(message);
             
             Promise.resolve (response)
                 .then (broadcast)

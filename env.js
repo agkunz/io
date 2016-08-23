@@ -4,7 +4,7 @@
     {
         return {
             APP_ENV : 'production',
-            SCRIPT_ROOT : '/var/www/adamkunz/io',
+            SCRIPT_ROOT : __dirname + '/',
             MONGO_URL : 'mongodb://localhost:27017/chat',
         };
     }
