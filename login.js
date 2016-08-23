@@ -8,8 +8,6 @@
 
     function Controller (request)
     {
-        var db = client.connect (env.MONGO_URL);
-
         var params = request.params;
 
         return co (login)
@@ -18,19 +16,8 @@
         
         function* login ()
         {
-            // get the user
-            var user = process (params);
+            var db = yield client.connect (env.MONGO_URL);
 
-            // start the session
-
-            // transform the response
-            user.password = null;
-
-            return user;
-        }
-
-        function process (params)
-        {
             var users = yield db.collection ('users')
                 .find ({ username : params.username })
                 .toArray();
@@ -44,14 +31,16 @@
             if (!bcrypt.compareSync(params.password, user.password)) {
                 throw "Invalid credentials.";
             }
-            
+
+            user.password = null;
+
+            db.close();
+
             return user;
         }
 
         function success (result)
         {
-            db.close();
-
             return { 
                 status : true,
                 from : 'system',
@@ -64,8 +53,6 @@
 
         function fail (result)
         {
-            db.close();
-
             return {
                 status : false,
                 from : 'system',
