@@ -20,7 +20,6 @@ wsServer.on('request', request);
 /////////////////////////////////////////////////
 
 var connections = [];
-var script_root = './';
 
 function request (request)
 {
@@ -49,8 +48,6 @@ function request (request)
         }
 
         try {
-            console.log (script_root+message.route+'.js');
-            
             var response = require (env.SCRIPT_ROOT+message.route+'.js')(message);
             
             Promise.resolve (response)
@@ -59,6 +56,14 @@ function request (request)
         } 
 
         catch (ex) {
+
+            if (ex.code === 'MODULE_NOT_FOUND') {
+                return send({ 
+                    from : 'system', 
+                    status : false, 
+                    message : 'That\'s not a real command.' 
+                });
+            }
 
             console.log('ERROR: '+ex.code);
             console.log(ex);

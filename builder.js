@@ -3,17 +3,18 @@
 	function Controller (message)
 	{
 		var data = {
-			success : true
+			status : 'success',
+			from : 'system',
 		};
 
 		if (message.position == 'start') {
 			data.message = 'Please stand by, maintenance under way.';
-			data.code = 'build-start';
+			data.command = 'build-start';
 		}
 
 		if (message.position == 'end') {
 			data.message = 'All done, refreshing.';
-			data.code = 'build-end';
+			data.command = 'build-end';
 		}
 
 		console.log(data.message);
