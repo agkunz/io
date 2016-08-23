@@ -13,13 +13,14 @@ wsServer = new WebSocketServer({
     autoAcceptConnections: false
 });
 
-wsServer.on('request', respond);
+wsServer.on('request', request);
 
 /////////////////////////////////////////////////
 
 var connections = [];
+var script_root = '/home/vagrant/host/www2/io/main/';
 
-function respond (request)
+function request (request)
 {
     if (!originIsAllowed(request.origin)) {
       // Make sure we only accept requests from an allowed origin
@@ -34,34 +35,39 @@ function respond (request)
 
     connections.push(connection);
 
-    connection.on('message', digest);
+    connection.on('message', respond);
     connection.on('close', cleanup);
-
-    function digest (message)
+    
+    function respond (message)
     {
         message = JSON.parse(message.utf8Data);
 
         if (!message.route) {
-            send({ error : 'You must supply an endpoint' });
+            return broadcast({ success : false, error : 'You must supply an endpoint' });
         }
 
         try {
+            console.log (script_root+message.route+'.js');
+            
+            var response = require (script_root+message.route+'.js')(message);
+            
+            Promise.resolve (response)
+                .then (broadcast)
+                .catch (broadcast);
+        } 
 
-            var response = require('/var/www/engage/io/'+message.route+'.js')(message);
+        catch (ex) {
 
-            send(response);
+            console.log('ERROR: '+ex.code);
+            console.log(ex);
 
-        } catch (ex) {
-            send({ error : ex[0] });
+            broadcast({ success : false, message : ex.code });
         }
-
     }
 
     function send (object)
     {
-        for (var key in connections) {
-            connections[key].sendUTF(JSON.stringify(object));
-        }
+        connection.send(JSON.stringify(object));
     }
 
     function cleanup (reasonCode, description)
@@ -73,12 +79,22 @@ function respond (request)
             connections.splice(index, 1);
         }
     }
-    
-    function originIsAllowed (origin)
-    {
-      // put logic here to detect whether the specified origin is allowed.
-      return true;
+}
+
+function broadcast (object)
+{
+    console.log('b: '+object.message);
+
+    for (var key in connections) {
+        connections[key].send(JSON.stringify(object));
     }
+}
+
+
+function originIsAllowed (origin)
+{
+  // put logic here to detect whether the specified origin is allowed.
+  return true;
 }
 
 
