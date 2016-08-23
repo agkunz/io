@@ -2,7 +2,7 @@
 var WebSocketServer = require('websocket').server;
 var http = require('http');
 
-var env = require(__dirname + '/env.js');
+var env = require(__dirname + '/env.js')();
 
 /////////////////////////////////////////////////
 
