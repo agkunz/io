@@ -8,7 +8,7 @@
 
     function Controller (request)
     {
-        var db = yield client.connect (env.MONGO_URL);
+        var db = client.connect (env.MONGO_URL);
 
         var params = request.params;
 
@@ -26,14 +26,11 @@
             // transform the response
             user.password = null;
 
-           
-
             return user;
         }
 
         function process (params)
         {
-
             var users = yield db.collection ('users')
                 .find ({ username : params.username })
                 .toArray();
