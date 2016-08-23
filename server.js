@@ -18,7 +18,7 @@ wsServer.on('request', request);
 /////////////////////////////////////////////////
 
 var connections = [];
-var script_root = '/home/vagrant/host/www2/io/main/';
+var script_root = '.';
 
 function request (request)
 {
