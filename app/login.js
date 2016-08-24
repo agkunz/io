@@ -1,12 +1,12 @@
 (function ()
 {
-    var env = require(__dirname + '/env.js')();
     var client = require('mongodb').MongoClient;
 
     var co = require('co');
+
     var bcrypt = require('bcrypt');
 
-    function Controller (request)
+    function Controller (request, connection)
     {
         var params = request.params;
 
@@ -16,7 +16,7 @@
         
         function* login ()
         {
-            var db = yield client.connect (env.MONGO_URL);
+            var db = yield client.connect (global.env.MONGO_URL);
 
             var users = yield db.collection ('users')
                 .find ({ username : params.username })
@@ -34,6 +34,8 @@
 
             user.password = null;
 
+            connection.user = user;
+
             db.close();
 
             return user;
@@ -49,7 +51,6 @@
                 data: result,
             }
         }
-
 
         function fail (result)
         {

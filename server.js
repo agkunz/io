@@ -2,35 +2,61 @@
 var WebSocketServer = require('websocket').server;
 var http = require('http');
 
-var env = require(__dirname + '/env.js')();
+
+var moment = require('moment');
+var colors = require('colors');
 
 /////////////////////////////////////////////////
+
+global.env = require(__dirname + '/env.js')();
+global.log = log;
 
 var server = http.createServer(begin);
+var connections = [];
 
-server.listen(8082, startAlert);
-
-wsServer = new WebSocketServer({
-    httpServer: server,
-    autoAcceptConnections: false
-});
-
-wsServer.on('request', request);
+__construct();
 
 /////////////////////////////////////////////////
 
-var connections = [];
+function __construct ()
+{
+    server.listen(8082, startAlert);
+
+    wsServer = new WebSocketServer({
+        httpServer: server,
+        autoAcceptConnections: false
+    });
+
+    wsServer.on('request', request);
+}
+
+function log (message)
+{
+    var date = moment().format('YYYY-MM-DD h:mm:ssa');
+    var message = '[%d] '.replace('%d', date).cyan + message;
+
+    console.log(message);
+}
 
 function request (request)
 {
     if (!originIsAllowed(request.origin)) {
-      // Make sure we only accept requests from an allowed origin
-      request.reject();
-      console.log((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
-      return;
+        // Make sure we only accept requests from an allowed origin
+        request.reject();
+        log(
+            ('Connection from origin %o '
+            + 'rejected'.bold
+            + '.'.replace('%o', request.origin))
+        );
+        return;
     }
 
-    console.log((new Date()) + ' Connection accepted.');
+    log(
+        ('Connection from %o '
+        + 'accepted'.bold
+        + '.')
+        .replace('%o', request.remoteAddress)
+    );
 
     var connection = request.accept('echo-protocol', request.origin);
 
@@ -48,7 +74,8 @@ function request (request)
         }
 
         try {
-            var response = require (env.SCRIPT_ROOT+message.route+'.js')(message);
+
+            var response = require (global.env.SCRIPT_ROOT+message.route+'.js')(message, connection);
             
             Promise.resolve (response)
                 .then (broadcast)
@@ -65,10 +92,21 @@ function request (request)
                 });
             }
 
-            console.log('ERROR: '+ex.code);
+            if (typeof ex === 'string') {
+                message = ex;
+            } else {
+                message = ex.code;
+            }
+
             console.log(ex);
 
-            broadcast({ success : false, message : ex.code });
+            log(('ERROR:  '+ message).red);
+
+            broadcast({ 
+                success : false,
+                from : 'system',
+                message : message 
+            });
         }
     }
 
@@ -81,22 +119,28 @@ function request (request)
     {
         var index = connections.indexOf(connection);
 
-        if (index !== -1) {
-            console.log((new Date()) + ' lws-mirror-protocol peer ' + connection.remoteAddress + ' disconnected, code: ' + reasonCode + '.');
-            connections.splice(index, 1);
-        }
+        if (index === -1) return;
+            
+        log((
+            'Connection from %o ' 
+            + 'disconnected'.bold
+            + ', code %c.')
+            .replace ('%o', connection.remoteAddress)
+            .replace ('%c', reasonCode)
+        );
+
+        connections.splice(index, 1);
     }
 }
 
 function broadcast (object)
 {
-    console.log('b: '+object.message);
+    log(('b: ' + object.message).yellow);
 
     for (var key in connections) {
         connections[key].send(JSON.stringify(object));
     }
 }
-
 
 function originIsAllowed (origin)
 {
@@ -104,15 +148,14 @@ function originIsAllowed (origin)
   return true;
 }
 
-
 function startAlert ()
 {
-    console.log((new Date()) + ' Server is listening on port 8082');
+    log('Server is listening on port 8082'.cyan);
 }
 
 function begin (request, response)
 {
-    console.log((new Date()) + ' Received request for ' + request.url);
+    log('Received request for ' + request.url);
     response.writeHead(404);
     response.end();
 }
