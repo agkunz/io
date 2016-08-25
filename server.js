@@ -152,7 +152,6 @@ function request (request)
         var cons = connections
             .filter(function (con)
             {
-                console.log(con.user.channels);
                 return con.user.channels
                     .filter(function (cha) { return cha === channel; })
                     .length;
