@@ -76,6 +76,9 @@
 
             connection.send(JSON.stringify(response));
             
+            delete response.command;
+            delete response.data;
+
             response.to = params.channel;
 
             return response;

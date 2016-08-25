@@ -77,11 +77,9 @@
         {
             Object.assign (result, { inbox : [], outbox : [] });
 
-            return { 
+            var response = { 
                 success : true,
                 from : '@system',
-                to : params.channel,
-
                 message : '%u has joined the channel %c'
                     .replace('%u', connection.user.username)
                     .replace('%c', params.channel),
@@ -89,6 +87,15 @@
                 command : 'joined',
                 data : result
             }
+
+            connection.send(JSON.stringify(response));
+            
+            delete response.command;
+            delete response.data;
+
+            response.to = params.channel;
+
+            return response;
         }
 
         function fail (result)
