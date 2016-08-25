@@ -212,7 +212,7 @@ function sendSystemMessage (connection, message)
     connection.send(JSON.stringify(object));
 }
 
-function broadcast (object)
+function broadcast (response)
 {
     var m = ('broadcast : @system >'.red + ' %message')
         .replace ('%message', response.message);
@@ -220,7 +220,7 @@ function broadcast (object)
     log (m);
 
     for (var key in connections) {
-        connections[key].send(JSON.stringify(object));
+        connections[key].send(JSON.stringify(response));
     }
 }
 
