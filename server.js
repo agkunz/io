@@ -75,13 +75,11 @@ function request (request)
 
             if (!message.route) {
                 return send({ 
-                    from : 'system',
-                    to : 'system',
+                    from : '@system',
+                    to : '#system',
                     message : 'You must supply an endpoint'
                 });
             }
-
-            log(message.route.red);
 
             var response = require (global.env.SCRIPT_ROOT+message.route+'.js')(message, connection);
             
@@ -96,8 +94,6 @@ function request (request)
 
         function success (response)
         {
-            log ('Success'.green);
-
             if (!response.to) {
                 return broadcast (response);
             }
@@ -218,7 +214,10 @@ function sendSystemMessage (connection, message)
 
 function broadcast (object)
 {
-    log(('b: ' + object.message).yellow);
+    var m = ('broadcast : @system >'.red + ' %message')
+        .replace ('%message', response.message);
+
+    log (m);
 
     for (var key in connections) {
         connections[key].send(JSON.stringify(object));

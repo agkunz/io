@@ -33,7 +33,7 @@
         {
             return { 
                 success : true,
-                from : connection.user.username,
+                from : '@' + connection.user.username,
                 to : params.channel,
                 message : params.message
             }

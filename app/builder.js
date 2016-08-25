@@ -3,8 +3,7 @@
 	function Controller (message)
 	{
 		var data = {
-			status : 'success',
-			from : 'system',
+			from : '@system',
 		};
 
 		if (message.position == 'start') {
@@ -16,8 +15,6 @@
 			data.message = 'All done, refreshing.';
 			data.command = 'buildEnd';
 		}
-
-		console.log(data.message);
 
 		return data;
 	}
