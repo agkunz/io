@@ -9,12 +9,12 @@
 
 		if (message.position == 'start') {
 			data.message = 'Please stand by, maintenance under way.';
-			data.command = 'build-start';
+			data.command = 'buildStart';
 		}
 
 		if (message.position == 'end') {
 			data.message = 'All done, refreshing.';
-			data.command = 'build-end';
+			data.command = 'buildEnd';
 		}
 
 		console.log(data.message);

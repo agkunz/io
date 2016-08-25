@@ -39,16 +39,22 @@
         {
             return { 
                 success : true, 
+                from : '@system',
+                to : '#system',
                 data: params,
                 message : '%u has been registered.'
                     .replace ('%u', params.username),
             }
         }
 
-
         function fail (result)
         {
-            return { success : false, message : result }
+            return {
+                status : false,
+                from : '@system',
+                to : '#system',
+                message : result,
+            }
         }
     }
 

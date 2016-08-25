@@ -34,6 +34,7 @@
             return { 
                 success : true,
                 from : connection.user.username,
+                to : params.channel,
                 message : params.message
             }
         }
@@ -41,8 +42,9 @@
         function fail (result)
         {
             return {
-                status : false,
-                from : 'system',
+                success : false,
+                from : '@system',
+                to : '#system',
                 message : result,
             }
         }

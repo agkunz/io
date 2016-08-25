@@ -62,31 +62,65 @@ function request (request)
 
     connections.push(connection);
 
+    // sendSystemMessage (connection, 'Connected.');
+
     connection.on('message', respond);
     connection.on('close', cleanup);
     
     function respond (message)
     {
-        message = JSON.parse(message.utf8Data);
-
-        if (!message.route) {
-            return broadcast({ success : false, error : 'You must supply an endpoint' });
-        }
-
         try {
+
+            message = JSON.parse(message.utf8Data);
+
+            if (!message.route) {
+                return send({ 
+                    from : 'system',
+                    to : 'system',
+                    message : 'You must supply an endpoint'
+                });
+            }
+
+            log(message.route.red);
 
             var response = require (global.env.SCRIPT_ROOT+message.route+'.js')(message, connection);
             
             Promise.resolve (response)
-                .then (broadcast)
-                .catch (broadcast);
+                .then (success)
+                .catch (error);
         } 
 
         catch (ex) {
+            error (ex);
+        }
 
+        function success (response)
+        {
+            log ('Success'.green);
+
+            if (!response.to) {
+                return broadcast (response);
+            }
+
+            if (response.to === '#system') {
+                return send (response);
+            }
+
+            if (response.to.startsWith('#')) {
+                return sendToChannel (response.to, response);
+            }
+
+            if (response.to.startsWith('@')) {
+                return sendToSession (response.to, response);
+            }
+        }
+
+        function error (ex)
+        {
             if (ex.code === 'MODULE_NOT_FOUND') {
                 return send({ 
                     from : 'system', 
+                    to : 'system',
                     status : false, 
                     message : 'That\'s not a real command.' 
                 });
@@ -102,12 +136,47 @@ function request (request)
 
             log(('ERROR:  '+ message).red);
 
-            broadcast({ 
-                success : false,
+            send({ 
                 from : 'system',
+                to : 'system',
                 message : message 
             });
         }
+    }
+
+    function sendToChannel (channel, response)
+    {
+        var m = ('%to : %from >'.red + ' %message')
+            .replace ('%from', response.from)
+            .replace ('%to', response.to)
+            .replace ('%message', response.message);
+
+        log (m);
+
+        var cons = connections
+            .filter(function (con)
+            {
+                console.log(con.user.channels);
+                return con.user.channels
+                    .filter(function (cha) { return cha === channel; })
+                    .length;
+            });
+
+        for (var key in cons)
+        {
+            cons[key].send(JSON.stringify(response));
+        }
+    }
+
+    function sendToSession (username, response)
+    {
+        var cons = connections.filter(function (con) { connection.user.username === username; });
+
+        if (!cons.length) return false;
+
+        var con = cons.shift();
+        
+        con.send(JSON.stringify(response));
     }
 
     function send (object)
@@ -120,7 +189,9 @@ function request (request)
         var index = connections.indexOf(connection);
 
         if (index === -1) return;
-            
+
+        // todo, remove from all channels
+
         log((
             'Connection from %o ' 
             + 'disconnected'.bold
@@ -131,6 +202,18 @@ function request (request)
 
         connections.splice(index, 1);
     }
+}
+
+function sendSystemMessage (connection, message)
+{
+    var object = {
+        from : 'system',
+        to : connection.user.username,
+        command : 'sendSystemMessage',
+        message : message,
+    }
+
+    connection.send(JSON.stringify(object));
 }
 
 function broadcast (object)

@@ -45,7 +45,8 @@
         {
             return { 
                 status : true,
-                from : 'system',
+                from : '@system',
+                to : '#system',
                 message : 'Welcome, %u!'.replace('%u', result.username),
                 command : 'loggedIn',
                 data: result,
@@ -56,7 +57,8 @@
         {
             return {
                 status : false,
-                from : 'system',
+                from : '@system',
+                to : '#system',
                 message : result,
             }
         }
