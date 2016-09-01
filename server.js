@@ -28,6 +28,19 @@ function __construct ()
     });
 
     wsServer.on('request', request);
+
+    process.on('SIGINT', shutdown);
+}
+
+function shutdown()
+{
+    broadcast ({ message : 'Going down for maintenance.' });
+
+    for (var key in connections) {
+        connections[key].close(4000, 'Going down for maintenance.');
+    }
+
+    process.exit();
 }
 
 function log (message)
@@ -185,7 +198,12 @@ function request (request)
 
         if (index === -1) return;
 
-        // todo, remove from all channels
+        //  remove from all channels
+        if (connection.user && connection.user.channels.length) {
+            for (var key in connection.user.channels) {
+                require(global.env.SCRIPT_ROOT+'part.js')({ channel : connection.user.channels[key] }, connection);
+            }
+        }
 
         log((
             'Connection from %o ' 
@@ -213,6 +231,8 @@ function sendSystemMessage (connection, message)
 
 function broadcast (response)
 {
+    response.from = '@system';
+
     var m = ('broadcast : @system >'.red + ' %message')
         .replace ('%message', response.message);
 
