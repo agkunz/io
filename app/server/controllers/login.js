@@ -4,7 +4,7 @@
 
     var co = require('co');
 
-    var bcrypt = require('bcrypt');
+    var bcrypt = require('bcrypt-nodejs');
 
     function Controller (request, connection)
     {

@@ -2,9 +2,13 @@
   "name": "io",
   "version": "1.0.0",
   "description": "Adams websocket testing facility",
-  "main": "server.js",
+  "main": "app/server/app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app/server/app.js"
+  },
   "dependencies": {
-    "bcrypt": "^0.8.7",
+    "bcrypt-nodejs": "0.0.3",
     "co": "^4.6.0",
     "colors": "^1.1.2",
     "moment": "^2.14.1",
@@ -12,13 +16,9 @@
     "websocket": "^1.0.23"
   },
   "devDependencies": {},
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
-  },
   "repository": {
     "type": "git",
-    "url": "git@git.adamkunz.net:io/main.git"
+    "url": "git@git.adamkunz.net:portfolio/io.git"
   },
   "author": "",
   "license": "ISC"

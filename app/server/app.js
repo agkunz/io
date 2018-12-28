@@ -8,7 +8,7 @@ var colors = require('colors');
 
 /////////////////////////////////////////////////
 
-global.env = require(__dirname + '/env.js')();
+global.env = require(__dirname + '/../../env.js');
 global.log = log;
 
 var server = http.createServer(begin);
@@ -20,7 +20,7 @@ __construct();
 
 function __construct ()
 {
-    server.listen(8082, startAlert);
+    server.listen(env.LISTEN_PORT, startAlert);
 
     wsServer = new WebSocketServer({
         httpServer: server,
@@ -94,7 +94,9 @@ function request (request)
                 });
             }
 
-            var response = require (global.env.SCRIPT_ROOT+message.route+'.js')(message, connection);
+            var action = env.SERVER_ROOT + '/controllers/' + message.route + '.js';
+
+            var response = require (action)(message, connection);
             
             Promise.resolve (response)
                 .then (success)
