@@ -257,7 +257,7 @@ function originIsAllowed (origin)
 
 function startAlert ()
 {
-    log('Server is listening on port 8082'.cyan);
+    log(('Server is listening on port %p'.cyan).replace('%p', env.LISTEN_PORT));
 }
 
 function begin (request, response)
