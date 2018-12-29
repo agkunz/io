@@ -1,10 +1,12 @@
 (function ()
 {
-	function Controller (message)
+	function Controller (message, connection)
 	{
 		return { 
 			success : true,
-			message : 'This is a test.'
+			message : 'This is a test.',
+			response : 'dotest',
+			data : { test: true },
 		}
 	}
 

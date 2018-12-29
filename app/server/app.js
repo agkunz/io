@@ -34,7 +34,10 @@ function __construct ()
 
 function shutdown()
 {
-    broadcast ({ message : 'Going down for maintenance.' });
+    broadcast ({ 
+        message : 'Going down for maintenance.',
+        command : 'disconnect'
+    });
 
     for (var key in connections) {
         connections[key].close(4000, 'Going down for maintenance.');
@@ -97,7 +100,7 @@ function request (request)
             var action = env.SERVER_ROOT + '/controllers/' + message.route + '.js';
 
             var response = require (action)(message, connection);
-            
+
             Promise.resolve (response)
                 .then (success)
                 .catch (error);
@@ -128,10 +131,13 @@ function request (request)
 
         function error (ex)
         {
+            console.log(ex);
+            log(('ERROR:  '+ message).red);
+
             if (ex.code === 'MODULE_NOT_FOUND') {
                 return send({ 
-                    from : 'system', 
-                    to : 'system',
+                    from : '@system', 
+                    to : '#system',
                     status : false, 
                     message : 'That\'s not a real command.' 
                 });
@@ -143,13 +149,9 @@ function request (request)
                 message = ex.code;
             }
 
-            console.log(ex);
-
-            log(('ERROR:  '+ message).red);
-
             send({ 
-                from : 'system',
-                to : 'system',
+                from : '@system',
+                to : '#system',
                 message : message 
             });
         }
@@ -198,12 +200,14 @@ function request (request)
     {
         var index = connections.indexOf(connection);
 
+        var action = env.SERVER_ROOT + '/controllers/part.js';
+
         if (index === -1) return;
 
         //  remove from all channels
         if (connection.user && connection.user.channels.length) {
             for (var key in connection.user.channels) {
-                require(global.env.SCRIPT_ROOT+'part.js')({ channel : connection.user.channels[key] }, connection);
+                require(action)({ channel : connection.user.channels[key] }, connection);
             }
         }
 

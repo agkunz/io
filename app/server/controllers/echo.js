@@ -23,6 +23,7 @@
             var result = yield db.collection ('messages')
                 .insert({
                     text : params.message,
+                    to : params.to,
                     from : connection.user._id
                 });
 
@@ -34,7 +35,7 @@
             return { 
                 success : true,
                 from : '@' + connection.user.username,
-                to : params.channel,
+                to : params.to,
                 message : params.message
             }
         }

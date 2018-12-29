@@ -3,7 +3,8 @@
     var client = require('mongodb').MongoClient;
 
     var co = require('co');
-    var bcrypt = require('bcrypt');
+
+    var bcrypt = require('bcrypt-nodejs');
 
     function Controller (request)
     {
@@ -15,7 +16,7 @@
         
         function* register ()
         {
-            var db = yield client.connect (global.env.MONGO_URL);
+            var db = yield client.connect (global.env.MONGO_URL, {});
 
             var users = yield db.collection ('users')
                 .find ({ username : params.username })
@@ -25,7 +26,7 @@
                 throw 'That user already exists';
             }
 
-            params.password = bcrypt.hashSync(params.password, 10);
+            params.password = bcrypt.hashSync(params.password);
 
             var result = yield db.collection ('users')
                 .insertOne (params);
