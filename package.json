@@ -11,8 +11,10 @@
     "bcrypt-nodejs": "0.0.3",
     "co": "^4.6.0",
     "colors": "^1.1.2",
+    "fs": "0.0.1-security",
     "moment": "^2.14.1",
     "mongodb": "^2.2.7",
+    "tls": "0.0.1",
     "websocket": "^1.0.23"
   },
   "devDependencies": {},
