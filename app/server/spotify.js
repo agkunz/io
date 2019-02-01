@@ -7,6 +7,8 @@
  * https://developer.spotify.com/web-api/authorization-guide/#authorization_code_flow
  */
 
+var http = require('http');
+var https = require('https');
 var express = require('express'); // Express web server framework
 var request = require('request'); // "Request" library
 var cors = require('cors');
@@ -14,26 +16,8 @@ var querystring = require('querystring');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
-var client_id = '09be945870074ec595e2f9174e572ba8'; // Your client id
-var client_secret = 'a40bbc3835994098a6b631cd44e24f98'; // Your secret
-var redirect_uri = 'http://localhost:8888/callback'; // Your redirect uri
-
-/**
- * Generates a random string containing numbers and letters
- * @param  {number} length The length of the string
- * @return {string} The generated string
- */
-var generateRandomString = function(length) {
-  var text = '';
-  var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-
-  for (var i = 0; i < length; i++) {
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
-  }
-  return text;
-};
-
-var stateKey = 'spotify_auth_state';
+var client_id = global.env.SPOTIFY_CLIENT_ID;
+var client_secret = global.env.SPOTIFY_CLIENT_SECRET;
 
 var app = express();
 
@@ -47,29 +31,40 @@ app.use(express.static(__dirname + '/public'))
       next();
     });;
 
-app.listen(8087);
-console.log('Listening for HTTP on port 8087');
+if (global.env.HTTP_PROTOCOL) {
 
-var access_token;
-var refresh_token;
+  if (global.env.HTTP_PROTOCOL === 'https') {
 
-app.get('/login', function(req, res) {
+    var options = {
+      key: fs.readFileSync(env.SSL_KEY, 'utf8'),
+      cert: fs.readFileSync(env.SSL_CERTIFICATE, 'utf8'),
+      ca: fs.readFileSync(env.SSL_CA, 'utf8')
+    };
 
-  var state = generateRandomString(16);
-  res.cookie(stateKey, state);
+    https.createServer(options, app).listen(global.env.HTTP_PORT);
+    global.log('Listening for HTTPS on port ' + global.env.HTTP_PORT);    
 
-  // your application requests authorization
-  var scope = 'user-read-private user-read-email';
-  res.redirect('https://accounts.spotify.com/authorize?' +
-    querystring.stringify({
-      response_type: 'code',
-      client_id: client_id,
-      scope: scope,
-      redirect_uri: redirect_uri,
-      state: state
-    }));
-});
+  } else {
 
+    // app.listen(global.env.HTTP_PORT);
+    http.createServer(app).listen(global.env.HTTP_PORT);
+    global.log('Listening for HTTP on port ' + global.env.HTTP_PORT);    
+
+  }
+
+} else {
+
+  http.createServer(app).listen(global.env.HTTP_PORT);
+  global.log('Listening for HTTP on port ' + global.env.HTTP_PORT);
+
+}
+
+
+/**
+ * Get a new access token
+ *
+ * https://developer.spotify.com/web-api/authorization-guide/#authorization_code_flow
+ */
 app.post('/token', function(req, res)
 {
   res.setHeader('Content-Type', 'application/json');
@@ -99,6 +94,11 @@ app.post('/token', function(req, res)
   }
 });
 
+/**
+ * refresh an existing access token
+ *
+ * https://developer.spotify.com/web-api/authorization-guide/#authorization_code_flow
+ */
 app.post('/refresh_token', function(req, res) {
 
   var authOptions = {
@@ -114,8 +114,6 @@ app.post('/refresh_token', function(req, res) {
   request.post(authOptions, then);
   function then (error, response, body) { res.send(body); }
 });
-
-
 
 app.get('/call', function (req, res)
 {

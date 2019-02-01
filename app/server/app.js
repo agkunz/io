@@ -28,11 +28,12 @@ __construct();
 function __construct ()
 {
     // configure ssl if we need it
-    if (env.LISTEN_PROTOCOL === 'wss') {
+    if (env.SOCKET_PROTOCOL === 'wss') {
 
         var options = {
-          key: fs.readFileSync(env.SSL_KEY),
-          cert: fs.readFileSync(env.SSL_CERTIFICATE)
+          key: fs.readFileSync(env.SSL_KEY, 'utf8'),
+          cert: fs.readFileSync(env.SSL_CERTIFICATE, 'utf8'),
+          ca: fs.readFileSync(env.SSL_CA, 'utf8')
         };
 
         server = tls.createServer(options);
@@ -43,8 +44,8 @@ function __construct ()
     }
 
     // start listening for http requests
-    server.listen(env.LISTEN_PORT, startAlert);
-    function startAlert () { log(('Listening for WS on port %p'.cyan).replace('%p', env.LISTEN_PORT)); }
+    server.listen(env.SOCKET_PORT, startAlert);
+    function startAlert () { log(('Listening for WS on port %p'.cyan).replace('%p', env.SOCKET_PORT)); }
 
     // start up a socket server, use the http server
     wsServer = new WebSocketServer({
