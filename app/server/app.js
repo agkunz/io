@@ -1,14 +1,11 @@
 #!/usr/bin/env node
 var WebSocketServer = require('websocket').server;
 var http = require('http');
-var tls = require('tls');
+var https = require('https');
 var fs = require('fs');
 
 var moment = require('moment');
 var colors = require('colors');
-
-
-
 
 /////////////////////////////////////////////////
 
@@ -36,15 +33,13 @@ function __construct ()
           ca: fs.readFileSync(env.SSL_CA, 'utf8')
         };
 
-        server = tls.createServer(options);
+        server = https.createServer(options).listen(env.SOCKET_PORT, startAlert);;
 
     } else {
         
-        server = http.createServer();
+        server = http.createServer().listen(env.SOCKET_PORT, startAlert);
     }
 
-    // start listening for http requests
-    server.listen(env.SOCKET_PORT, startAlert);
     function startAlert () { log(('Listening for WS on port %p'.cyan).replace('%p', env.SOCKET_PORT)); }
 
     // start up a socket server, use the http server
