@@ -7,10 +7,16 @@ var fs = require('fs');
 var moment = require('moment');
 var colors = require('colors');
 
+
+
+
 /////////////////////////////////////////////////
 
 global.env = require(__dirname + '/../../env.js');
 global.log = log;
+
+// listen for spotify requests
+var web = require(env.SERVER_ROOT + '/spotify.js');
 
 var server = null;
 var connections = [];
@@ -38,7 +44,7 @@ function __construct ()
 
     // start listening for http requests
     server.listen(env.LISTEN_PORT, startAlert);
-    function startAlert () { log(('Server is listening on port %p'.cyan).replace('%p', env.LISTEN_PORT)); }
+    function startAlert () { log(('Listening for WS on port %p'.cyan).replace('%p', env.LISTEN_PORT)); }
 
     // start up a socket server, use the http server
     wsServer = new WebSocketServer({
@@ -71,26 +77,19 @@ function __construct ()
         if (!originIsAllowed(request.origin)) {
             // Make sure we only accept requests from an allowed origin
             request.reject();
-            log(
-                ('Connection from origin %o '
-                + 'rejected'.bold
-                + '.'.replace('%o', request.origin))
-            );
+            log(('Connection from %o %s.')
+                .replace('%o', request.remoteAddress)
+                .replace('%s', 'rejected'.bold));
             return;
         }
 
-        log(
-            ('Connection from %o '
-            + 'accepted'.bold
-            + '.')
+        log(('Connection from %o %s.')
             .replace('%o', request.remoteAddress)
-        );
+            .replace('%s', 'accepted'.bold));
 
         var connection = request.accept('echo-protocol', request.origin);
 
         connections.push(connection);
-
-        // sendSystemMessage (connection, 'Connected.');
 
         connection.on('message', respond);
         connection.on('close', cleanup);
@@ -122,6 +121,8 @@ function __construct ()
                 error (ex);
             }
 
+            function send (object) { connection.send(JSON.stringify(object)); }
+
             function success (response)
             {
                 if (!response.to) {
@@ -143,7 +144,6 @@ function __construct ()
 
             function error (ex)
             {
-                console.log(ex);
                 log(('ERROR:  '+ message).red);
 
                 if (ex.code === 'MODULE_NOT_FOUND') {
@@ -169,8 +169,6 @@ function __construct ()
             }
         }
 
-        function send (object) { connection.send(JSON.stringify(object)); }
-
         function cleanup (reasonCode, description)
         {
             var index = connections.indexOf(connection);
@@ -186,13 +184,10 @@ function __construct ()
                 }
             }
 
-            log((
-                'Connection from %o ' 
-                + 'disconnected'.bold
-                + ', code %c.')
+            log(('Connection from %o %s, code %c.')
                 .replace ('%o', connection.remoteAddress)
-                .replace ('%c', reasonCode)
-            );
+                .replace ('%s', 'disconnected'.bold)
+                .replace ('%c', reasonCode));
 
             connections.splice(index, 1);
         }
@@ -205,27 +200,22 @@ function __construct ()
     }
 }
 
-
 function sendSystemMessage (connection, message)
 {
-    var object = {
+    connection.send(JSON.stringify({
         from : 'system',
         to : connection.user.username,
         command : 'sendSystemMessage',
         message : message,
-    }
-
-    connection.send(JSON.stringify(object));
+    }));
 }
 
 function broadcast (response)
 {
-    response.from = '@system';
-
-    var m = ('broadcast : @system >'.red + ' %message')
-        .replace ('%message', response.message);
-
-    log (m);
+    log (('%from : %to > %message'.red)
+        .replace('%from', 'broadcast')
+        .replace('%to', '#system')
+        .replace ('%message', response.message.white));
 
     for (var key in connections) {
         connections[key].send(JSON.stringify(response));
@@ -234,12 +224,10 @@ function broadcast (response)
 
 function sendToChannel (channel, response)
 {
-    var m = ('%to : %from >'.red + ' %message')
+    log(('%to : %from > %message'.red)
         .replace ('%from', response.from)
         .replace ('%to', response.to)
-        .replace ('%message', response.message);
-
-    log (m);
+        .replace ('%message', response.message.white));
 
     var cons = connections
         .filter(function (con)
