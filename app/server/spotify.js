@@ -47,6 +47,9 @@ app.use(express.static(__dirname + '/public'))
       next();
     });;
 
+app.listen(8087);
+console.log('Listening for HTTP on port 8087');
+
 var access_token;
 var refresh_token;
 
@@ -174,6 +177,3 @@ function api (uri, token, callback)
   // use the access token to access the Spotify Web API
   request.get(options, callback);  
 }
-
-console.log('Listening for HTTP on port 4200');
-app.listen(4200);
