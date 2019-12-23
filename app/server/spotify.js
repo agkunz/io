@@ -112,67 +112,90 @@ app.post('/refresh_token', function(req, res) {
     json: true
   };
 
-  request.post(authOptions, then);
+  request.post (authOptions, then);
+
   function then (error, response, body) { res.send(body); }
+
 });
 
-app.get('/call', function (req, res)
+app.get('/call', async function (req, res)
 {
-  api(req.query.endpoint, req.query.token, then);
-  function then (error, response, body) { res.send(body); }
+  let uri = req.query.endpoint;
+  let token = req.query.token;
+
+  let result = await call ( uri , token );
+
+  res.send ( result );
 });
 
-app.get('/me', function(req, res)
+// remember what the last valid response was
+var last = {};
+// make an endpoint to gather the spotify stats
+app.get('/stats', async function (req, res)
 {
-  api('/me', req.query.token, then);
-  function then (error, response, body) { res.send(body); }  
+  // use the supplied auth token
+  let token = req.query.token;
+
+  // prepare a spot to put the result
+  let result = {};
+
+  // attempt to
+  try {
+    // populate the result
+    result.me = await call ('/me', token);
+    result.me.player = await call ('/me/player', token);
+    result.me.devices = (await call ('/me/player/devices', token)).devices;
+    result.me.recent = await call ('/me/player/recently-played', token);
+  }
+  // and if there's a problem
+  catch (ex) {
+    // tell me what's up
+    console.log(ex.code);
+    // send the last valid response instead
+    return res.send (last);
+  }
+  // and if there's not
+  finally {
+    // record this as the last valid result
+    last = result.me;
+    // and return it.
+    return res.send (result.me);
+  }
 });
 
-app.get('/devices', function(req, res)
+function call ( uri, token )
 {
-  api('/me/player/devices', req.query.token, then);
-  function then (error, response, body) { res.send(body); }  
-});
+  let opts = {
 
-app.get('/recently-played', function(req, res)
-{
-  api('/me/player/recently-played', req.query.token, then);
-  function then (error, response, body) { res.send(body); }
-});
-
-app.get('/player', function(req, res)
-{
-  api('/me/player', req.query.token, then);
-  function then (error, response, body) { res.send(body); }
-});
-
-app.get('/stats', function (req, res)
-{
-  var result = {};
-
-  api('/me', req.query.token, function (error, response, body) { 
-    result.me = body;
-    api('/me/player/', req.query.token, function (error, response, body) { 
-      result.me.player = body;
-      api('/me/player/devices', req.query.token, function (error, response, body) { 
-        result.me.devices = body.devices;
-        api('/me/player/recently-played', req.query.token, function (error, response, body) { 
-          result.me.recent = body;
-          res.send(result.me);
-        });
-      });
-    });
-  });
-});
-
-function api (uri, token, callback)
-{
-  var options = {
     url: 'https://api.spotify.com/v1' + uri,
-    headers: { 'Authorization': 'Bearer ' + token },
-    json: true
+
+    headers: {
+      'Accept'        : 'application/json',
+      'Content-Type'  : 'application/json',
+      'Origin'        : 'https://www.adamkunz.net',
+      'DNT'           : '1',
+      'Authorization' : 'Bearer ' + token,
+    },
+
+    json : true,
+
+    timeout: 1500,
+
+    time: true,
   };
 
-  // use the access token to access the Spotify Web API
-  request.get(options, callback);  
+  return new Promise( (resolve, reject) =>
+  {
+    request.get ( opts, (err, res, body) =>
+    {
+      if (err) { 
+
+        return reject (err); 
+
+      }
+
+      return resolve (body);
+
+    });
+  }); 
 }
