@@ -146,21 +146,16 @@ app.get('/stats', async function (req, res)
     result.me.player = await call ('/me/player', token);
     result.me.devices = (await call ('/me/player/devices', token)).devices;
     result.me.recent = await call ('/me/player/recently-played', token);
+    // mark this as the last valid result
+    last = result.me;
   }
   // and if there's a problem
   catch (ex) {
     // tell me what's up
-    console.log(ex.code);
-    // send the last valid response instead
-    return res.send (last);
+    console.log(ex.code); // obviously in the real world we'd do something a little more robust here
   }
-  // and if there's not
-  finally {
-    // record this as the last valid result
-    last = result.me;
-    // and return it.
-    return res.send (result.me);
-  }
+
+  return res.send ( last );
 });
 
 function call ( uri, token )

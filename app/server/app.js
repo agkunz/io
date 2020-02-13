@@ -83,7 +83,19 @@ function __construct ()
       .replace('%o', request.remoteAddress)
       .replace('%s', 'accepted'.bold));
 
-    var connection = request.accept('echo-protocol', request.origin);
+    try {
+
+      var connection = request.accept('echo-protocol', request.origin);
+
+    }
+
+    catch (ex) {
+
+      console.log (ex);
+
+      return;
+
+    }
 
     connections.push(connection);
 
